@@ -1,3 +1,4 @@
+
 const express = require("express")
 const router = express.Router()
 
@@ -8,10 +9,16 @@ const rotaInicial = (req, res) => {
     res.json("Back-end Eventos Climáticos respondendo")
 }
 
-router.get('/',rotaInicial)
+router.get('/', rotaInicial)
+
 router.post('/usuarios', Usuario.cadastrar)
 router.get('/usuarios', Usuario.listar)
+router.put('/usuarios/:id', Usuario.atualizar)
+router.delete('/usuarios/:id', Usuario.excluir)
+
 router.post('/eventos', Evento.cadastrar)
 router.get('/eventos', Evento.listar)
+router.put('/eventos/:id', Evento.atualizar)
+router.delete('/eventos/:id', Evento.excluir)
 
 module.exports = router

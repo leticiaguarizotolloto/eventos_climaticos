@@ -31,8 +31,39 @@ const listar = (req, res) => {
         }
     })
 }
+const atualizar = (req, res) => {
+    const { id } = req.params
+    const { nome, email, senha } = req.body
 
+    const query = 'UPDATE usuario SET nome = ?, email = ?, senha = password(?) WHERE id = ?;'
+
+    con.query(query, [nome, email, senha, id], (err, results) => {
+        if (err) {
+            console.error(err)
+            res.status(500).json({ error: 'Erro ao atualizar usuário' })
+        } else {
+            res.json({ message: 'Usuário atualizado com sucesso' })
+        }
+    })
+}
+
+const excluir = (req, res) => {
+    const { id } = req.params
+
+    const query = 'DELETE FROM usuario WHERE id = ?;'
+
+    con.query(query, [id], (err, results) => {
+        if (err) {
+            console.error(err)
+            res.status(500).json({ error: 'Erro ao excluir usuário' })
+        } else {
+            res.json({ message: 'Usuário excluído com sucesso' })
+        }
+    })
+}
 module.exports = {
     cadastrar,
-    listar
+    listar,
+    atualizar,
+    excluir
 }

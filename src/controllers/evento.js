@@ -48,8 +48,40 @@ const listar = (req, res) => {
         }
     })
 }
+const atualizar = (req, res) => {
+    const { id } = req.params
+    const { nome } = req.body
+
+    const query = 'UPDATE evento SET nome = ? WHERE id = ?;'
+
+    con.query(query, [nome, id], (err, results) => {
+        if (err) {
+            console.error(err)
+            res.status(500).json({ error: 'Erro ao atualizar evento' })
+        } else {
+            res.json({ message: 'Evento atualizado com sucesso' })
+        }
+    })
+}
+
+const excluir = (req, res) => {
+    const { id } = req.params
+
+    const query = 'DELETE FROM evento WHERE id = ?;'
+
+    con.query(query, [id], (err, results) => {
+        if (err) {
+            console.error(err)
+            res.status(500).json({ error: 'Erro ao excluir evento' })
+        } else {
+            res.json({ message: 'Evento excluído com sucesso' })
+        }
+    })
+}
 
 module.exports = {
     cadastrar,
-    listar
+    listar,
+    atualizar,
+     excluir
 }
