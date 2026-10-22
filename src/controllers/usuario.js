@@ -1,9 +1,12 @@
+
 const con = require('../db')
 
 const cadastrar = (req, res) => {
     const { nome, email, senha } = req.body
+
     try {
         const query = 'INSERT INTO usuario (nome, email, senha) VALUES (?, ?, password(?));'
+
         con.query(query, [nome, email, senha], (err, results) => {
             if (err) {
                 console.error(err)
@@ -11,17 +14,25 @@ const cadastrar = (req, res) => {
             } else {
                 const novoUsuario = req.body
                 novoUsuario.id = results.insertId
-                res.status(201).json({ message: 'Usuário cadastrado com sucesso', user: novoUsuario })
+
+                res.status(201).json({
+                    message: 'Usuário cadastrado com sucesso',
+                    user: novoUsuario
+                })
             }
         })
     } catch (error) {
         console.error(error)
-        res.status(400).json({ error: 'Erro ao cadastrar usuário', details: 'Informe { nome, email, senha }' })
+        res.status(400).json({
+            error: 'Erro ao cadastrar usuário',
+            details: 'Informe { nome, email, senha }'
+        })
     }
 }
 
 const listar = (req, res) => {
     const query = 'SELECT * FROM usuario;'
+
     con.query(query, (err, results) => {
         if (err) {
             console.error(err)
@@ -31,6 +42,7 @@ const listar = (req, res) => {
         }
     })
 }
+
 const atualizar = (req, res) => {
     const { id } = req.params
     const { nome, email, senha } = req.body
@@ -61,9 +73,35 @@ const excluir = (req, res) => {
         }
     })
 }
+
+const login = (req, res) => {
+    const { email, senha } = req.body
+
+    const query = `
+        SELECT id, nome, email
+        FROM usuario
+        WHERE email = ? AND senha = password(?);
+    `
+
+    con.query(query, [email, senha], (err, results) => {
+        if (err) {
+            console.error(err)
+            res.status(500).json({ error: 'Erro ao realizar login' })
+        } else if (results.length === 0) {
+            res.status(404).json({ error: 'E-mail ou senha inválidos' })
+        } else {
+            res.json({
+                message: 'Login realizado com sucesso',
+                usuario: results[0]
+            })
+        }
+    })
+}
+
 module.exports = {
     cadastrar,
     listar,
     atualizar,
-    excluir
+    excluir,
+    login
 }

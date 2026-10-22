@@ -1,20 +1,17 @@
+
 const con = require('../db')
 
 const cadastrar = (req, res) => {
-
-    const { nome } = req.body
+    const { usuarioId, cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto } = req.body
 
     try {
+        const query = 'INSERT INTO evento (usuarioId, cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto) VALUES (?, ?, ?, ?, ?, ?);'
 
-        const query = 'INSERT INTO evento (nome) VALUES (?);'
-
-        con.query(query, [nome], (err, results) => {
-
+        con.query(query, [usuarioId, cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto], (err, results) => {
             if (err) {
                 console.error(err)
                 res.status(500).json({ error: 'Erro ao cadastrar evento' })
             } else {
-
                 const novoEvento = req.body
                 novoEvento.id = results.insertId
 
@@ -24,22 +21,19 @@ const cadastrar = (req, res) => {
                 })
             }
         })
-
     } catch (error) {
         console.error(error)
         res.status(400).json({
             error: 'Erro ao cadastrar evento',
-            details: 'Informe { nome }'
+            details: 'Informe { usuarioId, cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto }'
         })
     }
 }
 
 const listar = (req, res) => {
-
     const query = 'SELECT * FROM evento;'
 
     con.query(query, (err, results) => {
-
         if (err) {
             console.error(err)
             res.status(500).json({ error: 'Erro ao buscar eventos' })
@@ -48,13 +42,14 @@ const listar = (req, res) => {
         }
     })
 }
+
 const atualizar = (req, res) => {
     const { id } = req.params
-    const { nome } = req.body
+    const { usuarioId, cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto } = req.body
 
-    const query = 'UPDATE evento SET nome = ? WHERE id = ?;'
+    const query = 'UPDATE evento SET usuarioId = ?, cidade = ?, tipoEvento = ?, temperaturaMaxima = ?, data = ?, nivelImpacto = ? WHERE id = ?;'
 
-    con.query(query, [nome, id], (err, results) => {
+    con.query(query, [usuarioId, cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto, id], (err, results) => {
         if (err) {
             console.error(err)
             res.status(500).json({ error: 'Erro ao atualizar evento' })
@@ -79,9 +74,39 @@ const excluir = (req, res) => {
     })
 }
 
+const resumo = (req, res) => {
+    const query = `
+        SELECT
+            (SELECT AVG(temperaturaMaxima) FROM evento) AS mediaTemperaturas
+    `
+
+    con.query(query, (err, resultado) => {
+        if (err) {
+            console.error(err)
+            res.status(500).json({ error: 'Erro ao gerar resumo' })
+        } else {
+            const queryEventos = 'SELECT * FROM evento;'
+
+            con.query(queryEventos, (err, eventos) => {
+                if (err) {
+                    console.error(err)
+                    res.status(500).json({ error: 'Erro ao listar eventos' })
+                } else {
+                    res.json({
+                        eventos: eventos,
+                        mediaTemperaturas: resultado[0].mediaTemperaturas
+                    })
+                }
+            })
+        }
+    })
+}
+
+
 module.exports = {
     cadastrar,
     listar,
     atualizar,
-     excluir
+    excluir,
+    resumo
 }
