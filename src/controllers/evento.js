@@ -1,38 +1,27 @@
-
 const con = require('../db')
 
-const cadastrar = (req, res) => {
-    const { usuarioId, cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto } = req.body
-
+const cadastrarEvento = (req, res) => {
+    const { cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto, usuarioId } = req.body
     try {
-        const query = 'INSERT INTO evento (usuarioId, cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto) VALUES (?, ?, ?, ?, ?, ?);'
-
-        con.query(query, [usuarioId, cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto], (err, results) => {
+        const query = 'INSERT INTO evento (cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto, usuarioId) VALUES (?, ?, ?, ?, ?, ?)'
+        con.query(query, [cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto, usuarioId], (err, results) => {
             if (err) {
                 console.error(err)
                 res.status(500).json({ error: 'Erro ao cadastrar evento' })
             } else {
                 const novoEvento = req.body
                 novoEvento.id = results.insertId
-
-                res.status(201).json({
-                    message: 'Evento cadastrado com sucesso',
-                    evento: novoEvento
-                })
+                res.status(201).json({ message: 'Evento cadastrado com sucesso', user: novoEvento })
             }
         })
     } catch (error) {
         console.error(error)
-        res.status(400).json({
-            error: 'Erro ao cadastrar evento',
-            details: 'Informe { usuarioId, cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto }'
-        })
+        res.status(400).json({ error: 'Erro ao cadastrar evento', details: 'Informe {cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto, usuarioId}' })
     }
 }
 
-const listar = (req, res) => {
+const listarEvento = (req, res) => {
     const query = 'SELECT * FROM evento;'
-
     con.query(query, (err, results) => {
         if (err) {
             console.error(err)
@@ -42,71 +31,75 @@ const listar = (req, res) => {
         }
     })
 }
-
-const atualizar = (req, res) => {
-    const { id } = req.params
-    const { usuarioId, cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto } = req.body
-
-    const query = 'UPDATE evento SET usuarioId = ?, cidade = ?, tipoEvento = ?, temperaturaMaxima = ?, data = ?, nivelImpacto = ? WHERE id = ?;'
-
-    con.query(query, [usuarioId, cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto, id], (err, results) => {
-        if (err) {
-            console.error(err)
-            res.status(500).json({ error: 'Erro ao atualizar evento' })
-        } else {
-            res.json({ message: 'Evento atualizado com sucesso' })
-        }
-    })
+const alterarEvento = (req, res) => {
+    const {cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto, usuarioId } = req.body
+    try { 
+       const query = 'INSERT INTO evento (cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto, usuarioId) VALUES (?, ?, ?, ?, ?, ?)'
+        con.query(query, [cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto, usuarioId], (err, results) => {
+            if (err) {
+                console.error(err)
+                res.status(500).json({ error: 'Erro ao aleterar evento' })
+            } else {
+                const novoEvento = req.body
+                novoEvento.id = results.insertId
+                res.status(201).json({ message: 'Evento alterado com sucesso', user: novoEvento })
+            }
+        })
+    } catch (error) {
+        console.error(error)
+        res.status(400).json({ error: 'Erro ao alterar evento', details: 'Informe {cidade, tipoEvento, temperaturaMaxima, data, nivelImpacto, usuarioId}' })
+    }
 }
 
-const excluir = (req, res) => {
-    const { id } = req.params
+const excluirEvento = (req, res) => {
+    const id =Number( req.params.id);
 
-    const query = 'DELETE FROM evento WHERE id = ?;'
+    try {
+        const query = 'DELETE FROM evento WHERE id = ?;';
 
-    con.query(query, [id], (err, results) => {
-        if (err) {
-            console.error(err)
-            res.status(500).json({ error: 'Erro ao excluir evento' })
-        } else {
-            res.json({ message: 'Evento excluído com sucesso' })
+        con.query(query, [id], (err, results) => {
+            if (err) {
+                console.error(err);
+                 res.status(500).json({ error: 'Erro no banco de dados' });
+            }else{
+                if(results.affectedRows != 0){
+                    res.json(results)
+                }else{
+                res.status(404)
+            }
         }
-    })
-}
-
+        })
+    } catch (error) {
+        console.error(error)
+        res.status(400).json({ error: 'Erro ao excluir usuário', details: 'Informe id como parametro'})
+            }       
+}           
 const resumo = (req, res) => {
-    const query = `
-        SELECT
-            (SELECT AVG(temperaturaMaxima) FROM evento) AS mediaTemperaturas
-    `
+    const query = 'SELECT * FROM evento;';
 
-    con.query(query, (err, resultado) => {
+    con.query(query, (err, results) => {
         if (err) {
-            console.error(err)
-            res.status(500).json({ error: 'Erro ao gerar resumo' })
-        } else {
-            const queryEventos = 'SELECT * FROM evento;'
-
-            con.query(queryEventos, (err, eventos) => {
-                if (err) {
-                    console.error(err)
-                    res.status(500).json({ error: 'Erro ao listar eventos' })
-                } else {
-                    res.json({
-                        eventos: eventos,
-                        mediaTemperaturas: resultado[0].mediaTemperaturas
-                    })
-                }
-            })
+            return res.status(500).json({ error: 'Erro no banco de dados' });
         }
-    })
-}
+        if (results.length === 0) {
+            return res.json({ eventos: [], mediaTemperatura: 0 });
+        }
+
+        const soma = results.reduce((acc, evento) => acc + Number(evento.temperaturaMaxima), 0);
+        const media = soma / results.length;
+        
+        res.json({
+            eventos: results,
+            mediaTemperatura: Number(media.toFixed(2))
+        });
+    });
+};
 
 
 module.exports = {
-    cadastrar,
-    listar,
-    atualizar,
-    excluir,
+    cadastrarEvento,
+    listarEvento,
+    alterarEvento,
+    excluirEvento,
     resumo
 }
